@@ -1,27 +1,26 @@
-name: Deploy to Ubuntu
+name: Deploy Hello Anirut (Self-hosted)
 on:
   push:
-    branches: [ "main" ] # เมื่อเรา push เข้า main มันจะเริ่มทำงานทันที
+    branches: [ "main" ]
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    # 1. เปลี่ยนจาก ubuntu-latest เป็น self-hosted
+    # เพื่อให้คำสั่งด้านล่างไปรัน "ข้างใน" เครื่อง Ubuntu ของคุณโดยตรง
+    runs-on: self-hosted 
+
     steps:
+      # 2. ดึงโค้ดเวอร์ชันล่าสุดลงมาที่เครื่อง
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: SSH and Deploy
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASS }}
-          script: |
-            # คำสั่งเหล่านี้จะถูกรันบน Server Ubuntu ของคุณ
-            mkdir -p ~/apps/hello-anirut
-            cd ~/apps/hello-anirut
-            
-            # ปกติจะใช้ git pull แต่ถ้าเริ่มใหม่ ให้ล้างและลงใหม่เพื่อทดสอบ
-            # (ในงานจริงควรใช้ git pull)
-            docker stop $(docker ps -q --filter ancestor=hello-anirut-web-app) || true
-            docker compose up -d --build
+      # 3. สั่งรัน Docker Compose ได้เลย (ไม่ต้องใช้ SSH Action แล้ว)
+      - name: Build and Run Docker
+        run: |
+          echo "--- Starting Deployment on Local Server ---"
+          
+          # สั่ง Docker ทำงาน (มันจะสร้าง Container จาก Dockerfile ที่คุณเขียนไว้)
+          docker compose up -d --build
+          
+          echo "--- Deployment Complete! ---"
+          docker ps
